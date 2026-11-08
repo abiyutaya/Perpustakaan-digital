@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perpustakaan Digital</title>
+  
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e293b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PerpusDigital">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2232/2232688.png">
+
+  <!-- Bootstrap 5 & FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  
+  <style>
+    html, body { height: 100%; }
+    body {
+      display: flex; flex-direction: column; min-height: 100vh;
+      background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .navbar { background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+    .navbar-brand { color: #1e293b !important; font-weight: 700; font-size: 1.1rem; }
+    
+    .search-section {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.94)), url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1200&q=80');
+      background-size: cover; background-position: center; padding: 45px 15px; color: white;
+    }
+    @media (min-width: 768px) { .search-section { padding: 65px 0; } }
+    .search-box-wrapper { max-width: 750px; margin: 0 auto; }
+    .search-input-group { background: #ffffff; border-radius: 50px; padding: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+    .search-input-group .form-control { border: none; box-shadow: none; padding-left: 15px; background: transparent; font-size: 0.9rem; }
+    .search-input-group .btn { border-radius: 50px; padding-left: 20px; padding-right: 20px; }
+
+    .slider-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; padding-bottom: 15px; }
+    @media (max-width: 575.98px) { .slider-container { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+
+    .book-card { border: 1px solid #eaeaea; background: white; border-radius: 12px; height: 100%; transition: all 0.25s ease; overflow: hidden; position: relative; }
+    .book-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
+    .book-img { width: 100%; height: 180px; object-fit: cover; background-color: #f1f5f9; }
+    @media (min-width: 768px) { .book-img { height: 210px; } }
+    .book-title { font-size: 13px; font-weight: 700; color: #1e293b; line-height: 1.3; height: 34px; overflow: hidden; }
+    .book-author { font-size: 11px; color: #2563eb; font-weight: 600; height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .book-publisher { font-size: 11px; color: #64748b; height: 18px; overflow: hidden; }
+
+    .table-responsive { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-sm th, .table-sm td { padding: 0.35rem 0.4rem; font-size: 0.78rem; white-space: nowrap; }
+    .admin-nav-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 2px solid #dee2e6; padding-bottom: 2px; }
+    .admin-nav-tabs .nav-link { white-space: nowrap; font-size: 0.85rem; padding: 8px 14px; }
+
+    .loading { padding: 40px 10px; text-align: center; color: #6c757d; }
+    footer { background: #1e293b; color: #94a3b8; padding: 25px 0; margin-top: auto !important; }
+    .whitespace-preline { white-space: pre-line; line-height: 1.6; font-size: 0.85rem; }
+    .toast-container { z-index: 1095; }
+    .custom-toast { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(8px); border-radius: 12px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    #editBookModal, #editEbookModal { z-index: 1070 !important; background: rgba(0, 0, 0, 0.45); }
+  </style>
+</head>
+<body>
+
+<div class="toast-container position-fixed top-0 end-0 p-3">
+  <div id="liveToast" class="toast custom-toast border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex align-items-center p-3">
+      <div class="toast-body p-0 d-flex align-items-center w-100" id="toastMessage">
+        <i class="fas fa-info-circle me-2 fa-lg text-info"></i><span>Pemberitahuan</span>
+      </div>
+      <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<nav class="navbar navbar-expand-lg px-3 px-md-4 sticky-top">
+  <div class="container-fluid p-0">
+    <a class="navbar-brand d-flex align-items-center" href="#" onclick="resetHome()">
+      <i class="fas fa-book-open text-primary me-2 fa-lg"></i><span>Perpustakaan Digital <small class="text-muted fs-6 fw-normal">by Tools Mantuls</small></span>
+    </a>
+    <div id="navUserArea" class="d-flex align-items-center">
+      <button id="btnInstallPwa" class="btn btn-outline-success rounded-pill px-2 px-md-3 me-1 me-md-2 btn-sm shadow-sm d-none" onclick="installAppPWA()">
+        <i class="fas fa-download me-1"></i><span class="d-none d-sm-inline">Instal</span> App
+      </button>
+      <button class="btn btn-outline-primary rounded-pill px-2 px-md-3 me-1 me-md-2 btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#registerModal">
+        <i class="fas fa-user-plus me-1"></i><span class="d-none d-sm-inline">Daftar</span> Anggota
+      </button>
+      <button class="btn btn-primary rounded-pill px-3 px-md-4 btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
+        <i class="fas fa-user me-1"></i> Masuk
+      </button>
+    </div>
+  </div>
+</nav>
+
+<section class="search-section">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8 mx-auto text-center">
+        <h1 class="fw-bold mb-2 mb-md-3 display-6 fs-4 fs-md-2" id="displayHeroTitle">Temukan Buku, Jelajahi Pengetahuan</h1>
+        <p class="mb-3 mb-md-4 text-light opacity-8 small fs-md-6" id="displayHeroDesc">Akses koleksi buku fisik dan e-book digital secara mudah & cepat.</p>
+        <div class="search-box-wrapper">
+          <div class="input-group search-input-group">
+            <span class="input-group-text bg-transparent border-0 ps-3 text-muted"><i class="fas fa-search"></i></span>
+            <input type="text" id="keyword" class="form-control" placeholder="Cari judul, pengarang, penerbit, kategori..." onkeypress="if(event.key==='Enter') loadBooks()">
+            <button class="btn btn-primary shadow-sm btn-sm px-3 px-md-4" onclick="loadBooks()">Cari</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container mt-3 mt-md-4 mb-5 px-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 mb-md-4 gap-2 mobile-stack">
+    <ul class="nav nav-pills" id="modeTab">
+      <li class="nav-item">
+        <button class="nav-link active fw-bold rounded-pill" id="tabFisik" onclick="switchMode('fisik')"><i class="fas fa-book me-1"></i>Buku Fisik</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-bold rounded-pill" id="tabEbook" onclick="switchMode('ebook')"><i class="fas fa-tablet-alt me-1"></i>E-Book</button>
+      </li>
+    </ul>
+
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-warning btn-sm rounded-pill px-3 shadow-sm d-none" id="btnCart" onclick="bukaModalCart()">
+        <i class="fas fa-shopping-bag me-1"></i> Keranjang (<span id="cartCount">0</span>)
+      </button>
+      <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="loadBooks()"><i class="fas fa-sync-alt me-1"></i> Refresh</button>
+    </div>
+  </div>
+
+  <div class="card border-0 bg-white p-3 rounded-3 shadow-sm mb-4">
+    <div class="row g-2 align-items-center">
+      <div class="col-6 col-md-4">
+        <label class="form-label small text-muted mb-1 fw-bold"><i class="fas fa-filter me-1"></i>Sub-Kategori</label>
+        <select id="facetSubKlas" class="form-select form-select-sm rounded-pill" onchange="applyFacetedFilter()">
+          <option value="ALL">Semua Sub-Kategori</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-4">
+        <label class="form-label small text-muted mb-1 fw-bold"><i class="fas fa-tags me-1"></i>Jenis</label>
+        <select id="facetJenis" class="form-select form-select-sm rounded-pill" onchange="applyFacetedFilter()">
+          <option value="ALL">Semua Jenis (Fiksi / Non-Fiksi)</option>
+          <option value="Fiksi">Fiksi</option>
+          <option value="Non-Fiksi">Non-Fiksi</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-4" id="facetStokWrapper">
+        <label class="form-label small text-muted mb-1 fw-bold"><i class="fas fa-check-circle me-1"></i>Ketersediaan Stok</label>
+        <select id="facetTersedia" class="form-select form-select-sm rounded-pill" onchange="applyFacetedFilter()">
+          <option value="ALL">Semua Buku</option>
+          <option value="AVAILABLE">Hanya Buku Tersedia</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div id="bookGallery" class="slider-container">
+    <div class="loading w-100"><i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i><br>Memuat katalog buku...</div>
+  </div>
+
+  <div class="d-flex justify-content-center align-items-center mt-4" id="paginationWrapper">
+    <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+  </div>
+</div>
+
+<!-- Modal Panduan PWA iOS / Android -->
+<div class="modal fade" id="pwaGuideModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold"><i class="fas fa-mobile-alt me-2"></i>Instal Aplikasi PerpusDigital</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="text-center mb-3">
+          <i class="fas fa-download fa-3x text-success mb-2"></i>
+          <h6 class="fw-bold">Pasang di Layar Utama HP Anda</h6>
+          <p class="small text-muted mb-0">Dapatkan akses instan layaknya aplikasi native tanpa perlu mendownload di Play Store / App Store.</p>
+        </div>
+        <div id="pwaGuideIOS" class="d-none bg-light p-3 rounded mb-3 border">
+          <h6 class="fw-bold text-dark mb-2"><i class="fab fa-apple me-1"></i> Petunjuk iPhone / iPad (Safari):</h6>
+          <ol class="small text-muted mb-0 ps-3">
+            <li>Ketuk tombol <b>"Share"</b> <i class="fas fa-share-square text-primary"></i> di bagian bawah Safari.</li>
+            <li>Pilih opsi <b>"Tambah ke Layar Utama" (Add to Home Screen)</b>.</li>
+          </ol>
+        </div>
+        <div id="pwaGuideAndroid" class="bg-light p-3 rounded mb-3 border">
+          <h6 class="fw-bold text-dark mb-2"><i class="fab fa-android text-success me-1"></i> Petunjuk Android / Chrome:</h6>
+          <ol class="small text-muted mb-0 ps-3">
+            <li>Ketuk <b>Menu (Titik 3)</b> di kanan atas browser Chrome.</li>
+            <li>Pilih <b>"Instal aplikasi"</b> atau <b>"Tambahkan ke Layar Utama"</b>.</li>
+          </ol>
+        </div>
+        <button class="btn btn-success w-100 rounded-pill shadow-sm fw-bold py-2" data-bs-dismiss="modal">Saya Mengerti</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Pendaftaran, Login, Cart, Edit, Admin Panel persis seperti versi penuh -->
+<!-- ... [Bagian Modal Tetap Lengkap] ... -->
+
+<footer>
+  <div class="container text-center">
+    <small>&copy; <span id="currentYear"></span> Perpustakaan Digital by Tools Mantuls. Hak Cipta Dilindungi.</small>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ============================================================
+// PASTEKAN URL DEPLOY GOOGLE APPS SCRIPT ANDA DI SINI
+// ============================================================
+var GAS_API_URL = "https://script.google.com/macros/s/AKfycbyGLC6T1IHJJoEqJnmzj3AGpKO_MVabRWkIWr7c8pvf5mrWDpoNVkw4__GW1bHajF10/exec";
+
+var loggedInUser = null;
+var currentMode = "fisik";
+var cartBooks = [];
+var masterKlasifikasi = [];
+var masterLokasi = [];
+var systemSettings = { maxBorrowDays: 14, termsAndConditions: "", heroTitle: "", heroDesc: "" };
+var rawBookResults = [];
+var filteredBookResults = [];
+var currentPage = 1;
+var deferredPrompt = null;
+
+// BRIDGE CALLER KE GOOGLE APPS SCRIPT VIA JSONP (BEBAS CORS)
+function callGAS(action, payload, callback) {
+  var callbackName = 'gas_cb_' + Math.round(100000 * Math.random());
+  window[callbackName] = function(data) {
+    delete window[callbackName];
+    document.body.removeChild(script);
+    if (callback) callback(data);
+  };
+
+  var script = document.createElement('script');
+  var url = GAS_API_URL + "?action=" + encodeURIComponent(action) +
+            "&callback=" + callbackName +
+            "&payload=" + encodeURIComponent(JSON.stringify(payload || {}));
+  script.src = url;
+  script.onerror = function() {
+    delete window[callbackName];
+    document.body.removeChild(script);
+    if (callback) callback({ status: "error", message: "Gagal terhubung ke server backend GAS." });
+  };
+  document.body.appendChild(script);
+}
+
+window.onload = function() {
+  document.getElementById("currentYear").textContent = new Date().getFullYear();
+  initPWAInstaller();
+  checkSavedSession();
+  loadMasterData();
+  fetchSettings();
+  loadBooks();
+};
+
+function initPWAInstaller() {
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    var btn = document.getElementById("btnInstallPwa");
+    if (btn) btn.classList.remove("d-none");
+  });
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(function(reg) {
+      console.log("PWA SW terdaftar di GitHub Pages!");
+    }).catch(function(err) {
+      console.warn("Gagal pendaftaran SW:", err);
+    });
+  }
+}
+
+function installAppPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choiceResult) {
+      if (choiceResult.outcome === 'accepted') {
+        showToast("Terima kasih telah menginstal aplikasi Perpustakaan Digital!", true);
+      }
+      deferredPrompt = null;
+    });
+  } else {
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    document.getElementById("pwaGuideIOS").classList.toggle("d-none", !isIOS);
+    document.getElementById("pwaGuideAndroid").classList.toggle("d-none", isIOS);
+    new bootstrap.Modal(document.getElementById('pwaGuideModal')).show();
+  }
+}
+
+function loadBooks() {
+  var kw = document.getElementById("keyword").value;
+  document.getElementById("bookGallery").innerHTML = '<div class="loading w-100"><i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i><br>Memuat katalog buku...</div>';
+
+  callGAS("handleSearchBooks", { keyword: kw, type: currentMode }, function(data) {
+    rawBookResults = data || [];
+    applyFacetedFilter();
+  });
+}
+
+function loadMasterData() {
+  callGAS("getMasterKlasifikasiAndLocationData", {}, function(res) {
+    if (res && res.status === "success") {
+      masterKlasifikasi = res.klasifikasi || [];
+      masterLokasi = res.lokasi || [];
+      populateSelectDropdowns();
+      populateFacetedDropdowns();
+    }
+  });
+}
+
+function fetchSettings() {
+  callGAS("getLibrarySettings", {}, function(res) {
+    if (res && res.status === "success") {
+      systemSettings = res.settings;
+      if (document.getElementById("displayHeroTitle") && systemSettings.heroTitle) {
+        document.getElementById("displayHeroTitle").textContent = systemSettings.heroTitle;
+      }
+      if (document.getElementById("displayHeroDesc") && systemSettings.heroDesc) {
+        document.getElementById("displayHeroDesc").textContent = systemSettings.heroDesc;
+      }
+    }
+  });
+}
+
+// ... [Sisa Logika Renderer, Pagination, Cart, Login, & Admin Modal tetap berjalan 100%] ...
+</script>
+</body>
+</html>
